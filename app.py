@@ -86,7 +86,7 @@ def user_input(user_question):
         st.error("No response generated.")
 
 def main():
-    st.set_page_config(title="Chat PDF")
+    st.set_page_config("Chat with PDF")
     st.header("Chat with PDF")
 
     user_question = st.text_input("Ask a Question from the PDF Files")
