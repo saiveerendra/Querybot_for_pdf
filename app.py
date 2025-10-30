@@ -100,6 +100,7 @@ def main():
 
     with st.sidebar:
         st.title("Menu:")
+        st.sidebar.write("🔍 google-generativeai version:", genai.__version__)
         pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", accept_multiple_files=True)
         if st.button("Submit & Process"):
             with st.spinner("Processing..."):
