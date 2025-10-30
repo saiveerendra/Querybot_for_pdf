@@ -5,18 +5,25 @@ import os
 from langchain.vectorstores import FAISS
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
+import google.generativeai as genai
 import requests
 
 # -----------------------------------------------------------------------------
-# Load API keys
+# Load environment variables
 # -----------------------------------------------------------------------------
 load_dotenv()
 groq_api_key = os.getenv("GROQ_API_KEY")
+google_api_key = os.getenv("GOOGLE_API_KEY")
 
-# Translation API
+# Configure Gemini
+genai.configure(api_key=google_api_key)
+
+# -----------------------------------------------------------------------------
+# Translation API setup
+# -----------------------------------------------------------------------------
 TRANSLATION_URL = "https://deep-translate1.p.rapidapi.com/language/translate/v2"
 HEADERS = {
     "content-type": "application/json",
@@ -25,7 +32,7 @@ HEADERS = {
 }
 
 # -----------------------------------------------------------------------------
-# PDF Text Extraction
+# PDF Reading
 # -----------------------------------------------------------------------------
 def get_pdf_text(pdf_docs):
     text = ""
@@ -43,34 +50,33 @@ def get_text_chunks(text):
     return text_splitter.split_text(text)
 
 # -----------------------------------------------------------------------------
-# Create FAISS Vector Store
+# Create FAISS Vector Store using Gemini Embeddings
 # -----------------------------------------------------------------------------
 def get_vector_store(text_chunks):
-    embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
-    model_kwargs={"device": "cpu"}
-)
-
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     vector_store.save_local("faiss_index")
 
 # -----------------------------------------------------------------------------
-# Define Conversational Chain (Groq LLM)
+# Create QA Chain using Groq LLM
 # -----------------------------------------------------------------------------
 def get_conversational_chain():
     prompt_template = """
-    Answer the question as detailed as possible from the provided context.
-    If the answer is not in the provided context, just say, "answer is not available in the context".
-    Do not provide a wrong answer.
+    Answer the question as detailed as possible using the provided context.
+    If the answer is not found in the context, say "Answer is not available in the context."
+    Do not provide incorrect information.
 
-    Context:\n{context}\n
-    Question:\n{question}\n
+    Context:
+    {context}
+
+    Question:
+    {question}
+
     Answer:
     """
 
-    # Groq model options: "llama3-8b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"
     model = ChatGroq(
-        model_name="mixtral-8x7b-32768",
+        model_name="mixtral-8x7b-32768",  # You can switch to "llama3-8b-8192"
         api_key=groq_api_key,
         temperature=0.3
     )
@@ -79,25 +85,24 @@ def get_conversational_chain():
     return load_qa_chain(model, chain_type="stuff", prompt=prompt)
 
 # -----------------------------------------------------------------------------
-# Translation Function
+# Translation (English → Telugu)
 # -----------------------------------------------------------------------------
 def translate_text(text, source_lang="en", target_lang="te"):
     payload = {"q": text, "source": source_lang, "target": target_lang}
-    response = requests.post(TRANSLATION_URL, json=payload, headers=HEADERS)
-
-    if response.status_code == 200:
-        return response.json()["data"]["translations"]["translatedText"]
-    else:
-        return f"Translation failed: {response.text}"
+    try:
+        response = requests.post(TRANSLATION_URL, json=payload, headers=HEADERS)
+        if response.status_code == 200:
+            return response.json()["data"]["translations"]["translatedText"]
+        else:
+            return f"Translation failed: {response.text}"
+    except Exception as e:
+        return f"Translation error: {str(e)}"
 
 # -----------------------------------------------------------------------------
-# Handle User Input
+# Handle User Question
 # -----------------------------------------------------------------------------
 def user_input(user_question):
-    embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
-    model_kwargs={"device": "cpu"}
-)
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     try:
         new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
@@ -110,33 +115,39 @@ def user_input(user_question):
     response = chain({"input_documents": docs, "question": user_question}, return_only_outputs=True)
 
     if "output_text" in response:
-        translated_text = translate_text(response["output_text"])
-        st.write(translated_text)
+        answer = response["output_text"]
+        translated = translate_text(answer)
+        st.subheader("🧠 Answer:")
+        st.write(answer)
+        st.subheader("🌐 Telugu Translation:")
+        st.write(translated)
     else:
         st.error("No response generated.")
 
 # -----------------------------------------------------------------------------
-# Streamlit UI
+# Streamlit App UI
 # -----------------------------------------------------------------------------
 def main():
-    st.set_page_config("Chat with PDF")
-    st.header("📘 Chat with PDF (Groq-powered RAG)")
+    st.set_page_config("Chat with PDF (Groq + Gemini)", page_icon="📘")
+    st.title("📘 Chat with PDF — Free RAG App (Groq + Gemini Embeddings)")
 
-    user_question = st.text_input("Ask a question from the PDF files:")
+    user_question = st.text_input("💬 Ask a question based on your uploaded PDFs:")
 
     if user_question:
         user_input(user_question)
 
     with st.sidebar:
-        st.title("⚙️ Menu")
-        st.write("💡 Using **Groq Mixtral-8x7b** model for fast, context-aware answers.")
-        pdf_docs = st.file_uploader("Upload PDF files and click 'Submit & Process'", accept_multiple_files=True)
-        if st.button("Submit & Process"):
-            with st.spinner("Processing PDFs..."):
+        st.header("⚙️ Controls")
+        st.info("💡 Uses **Groq Mixtral LLM** + **Gemini Embeddings** (free tier).")
+        pdf_docs = st.file_uploader("📁 Upload PDF files", accept_multiple_files=True)
+
+        if st.button("🚀 Submit & Process"):
+            with st.spinner("Processing your PDFs..."):
                 raw_text = get_pdf_text(pdf_docs)
                 text_chunks = get_text_chunks(raw_text)
                 get_vector_store(text_chunks)
                 st.success("✅ Processing Complete! You can now ask questions.")
 
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     main()
