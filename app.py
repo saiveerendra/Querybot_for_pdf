@@ -98,7 +98,6 @@ def user_input(user_question):
     model_name="sentence-transformers/all-MiniLM-L6-v2",
     model_kwargs={"device": "cpu"}
 )
-)
 
     try:
         new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
