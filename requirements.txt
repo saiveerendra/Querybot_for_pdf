@@ -1,21 +1,10 @@
 streamlit==1.38.0
-
-# Gemini SDK (v1 API)
-google-generativeai==0.8.3
-
-# LangChain ecosystem (matching versions)
-langchain==0.2.14
-langchain-community==0.2.14
-langchain-google-genai==1.0.6
-
-# Local embeddings to avoid Gemini quota
+langchain==0.2.15
+langchain-community==0.2.15
+langchain-groq==0.1.3
 sentence-transformers==2.7.0
-
-# Vector store + document handling
 faiss-cpu==1.12.0
 PyPDF2==3.0.1
 chromadb==0.5.5
-
-# Utility libs
 python-dotenv==1.0.1
 requests==2.32.3
