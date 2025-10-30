@@ -17,6 +17,7 @@ import google.generativeai as genai
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
+st.write(api_key)
 
 # Translation API (optional)
 TRANSLATION_URL = "https://deep-translate1.p.rapidapi.com/language/translate/v2"
