@@ -1,14 +1,14 @@
-streamlit>=1.38.0
+streamlit==1.38.0
 
 # Gemini SDK with v1 API support
 google-generativeai==0.8.3
 
-# Latest LangChain stack compatible with v0.8.x
+# LangChain stack (matching versions)
 langchain==0.2.14
 langchain-community==0.2.14
 langchain-google-genai==1.0.6
 
-# Local embeddings to avoid quota
+# Local embeddings (no Gemini quota)
 sentence-transformers==2.7.0
 
 # Vector store + document handling
