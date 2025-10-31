@@ -10,12 +10,19 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 
+# ⚙️ Page configuration must come FIRST
+st.set_page_config(page_title="Chat with PDF", layout="wide")
+
 # ==========================
 # Load API Keys
 # ==========================
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)
+
+if not api_key:
+    st.error("⚠️ GOOGLE_API_KEY not found in .env file.")
+else:
+    genai.configure(api_key=api_key)
 
 # ==========================
 # Helper Functions
@@ -55,7 +62,7 @@ def user_input(user_question):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     if not os.path.exists("faiss_index"):
-        st.error("FAISS index not found. Please upload and process PDFs first.")
+        st.error("❌ FAISS index not found. Please upload and process PDFs first.")
         return
 
     try:
@@ -70,26 +77,20 @@ def user_input(user_question):
 
     answer = response.get("output_text") or response.get("result", "")
     if answer:
-        st.write("### 🧠 Answer:")
+        st.markdown("### 🧠 Answer:")
         st.write(answer)
     else:
-        st.error("No response generated.")
+        st.warning("No response generated.")
 
 # ==========================
 # Streamlit App
 # ==========================
 
 def main():
-    st.set_page_config(page_title="Chat with PDF")
-    st.header("📄 Chat with PDF using Gemini + FAISS")
-
-    user_question = st.text_input("Ask a question about the PDF content:")
-
-    if user_question:
-        user_input(user_question)
+    st.title("📄 Chat with PDF using Gemini + FAISS")
 
     with st.sidebar:
-        st.title("📚 Upload & Process")
+        st.header("📚 Upload & Process")
         pdf_docs = st.file_uploader("Upload PDF files", accept_multiple_files=True)
         if st.button("Submit & Process"):
             if not pdf_docs:
@@ -100,6 +101,10 @@ def main():
                 text_chunks = get_text_chunks(raw_text)
                 get_vector_store(text_chunks)
                 st.success("✅ PDFs processed successfully!")
+
+    user_question = st.text_input("Ask a question about the PDF content:")
+    if user_question:
+        user_input(user_question)
 
 if __name__ == "__main__":
     main()
