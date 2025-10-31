@@ -91,7 +91,7 @@ def translate_text(text, source_lang="en", target_lang="te"):
 
 # --- User Query ---
 def user_input(user_question):
-    embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", client=bedrock_client)
+    embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v2:0", client=bedrock_client)
     new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
     qa_chain = get_conversational_chain(new_db)
     response = qa_chain.run(user_question)
