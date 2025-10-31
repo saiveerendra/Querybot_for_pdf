@@ -12,14 +12,22 @@ import os
 import requests
 
 # --- Load Environment Variables ---
-load_dotenv()
+# --- AWS Bedrock Client Initialization with Explicit Credentials ---
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 
-# --- Initialize Bedrock Client Securely ---
+if not all([AWS_ACCESS_KEY, AWS_SECRET_KEY]):
+    st.error("❌ AWS credentials are missing! Please check your .env or Streamlit Secrets.")
+else:
+    st.sidebar.success("✅ AWS credentials loaded successfully")
+
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
-    region_name=os.getenv("AWS_REGION", "us-east-1")
+    region_name=AWS_REGION,
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY
 )
-
 # --- Translation API Setup ---
 TRANSLATION_URL = "https://deep-translate1.p.rapidapi.com/language/translate/v2"
 HEADERS = {
