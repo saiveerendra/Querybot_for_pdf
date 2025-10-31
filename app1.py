@@ -13,12 +13,10 @@ import os
 # Load environment variables
 load_dotenv()
 
-# Initialize AWS Bedrock client
+# --- AWS Bedrock Client ---
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
-    region_name="us-east-1",  # change if your region differs
-    aws_access_key_id="AKIA4AQ3T6K63DMN7UGG",
-    aws_secret_access_key="AKIA4AQ3T6K6TKFLQTMT"
+    region_name=os.getenv("AWS_REGION", "us-east-1")
 )
 # AKIA4AQ3T6K6TKFLQTMT
 # AKIA4AQ3T6K63DMN7UGG
