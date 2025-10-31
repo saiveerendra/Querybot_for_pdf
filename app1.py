@@ -51,7 +51,7 @@ def get_text_chunks(text):
 
 # --- Create Vector Store ---
 def get_vector_store(text_chunks):
-    embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v1", client=bedrock_client)
+    embeddings = BedrockEmbeddings(model_id="amazon.titan-embed-text-v2:0", client=bedrock_client)
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     vector_store.save_local("faiss_index")
 
