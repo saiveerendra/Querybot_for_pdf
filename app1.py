@@ -24,7 +24,7 @@ bedrock_client = boto3.client(
 TRANSLATION_URL = "https://deep-translate1.p.rapidapi.com/language/translate/v2"
 HEADERS = {
     "content-type": "application/json",
-    "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
+    "X-RapidAPI-Key": "2761bb9559msh64aaf6be6191b4cp191e83jsn51da63e6da75",
     "X-RapidAPI-Host": "deep-translate1.p.rapidapi.com"
 }
 
